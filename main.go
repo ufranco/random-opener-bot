@@ -28,7 +28,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	repository := bot.NewRepo((mongoClient.Database("openerBot").Collection("openers")))
+	database := mongoClient.Database("openerBot")
+
+	oRepository := bot.NewOpenerRepository(database.Collection("openers"))
+	aRepository := bot.NewAccountRepository(database.Collection("accounts"))
+
+	service := bot.NewService(aRepository, oRepository)
 
 	session, err := discordgo.New("Bot " + config.BotToken)
 
@@ -37,13 +42,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	bot.Start(context, session, repository)
+	session.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuildMessageReactions
+
+	bot.Start(session, service)
 
 	sessionChannel := make(chan os.Signal, 1)
 	signal.Notify(sessionChannel, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sessionChannel
 
 	session.Close()
-	defer mongoClient.Disconnect(context)
+	mongoClient.Disconnect(context)
 
 }
