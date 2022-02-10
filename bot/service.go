@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -42,13 +43,13 @@ func (logic *service) GetOpenerLeaderboard() ([]Opener, error) {
 
 func (logic *service) SetFavoriteOpener(message *discordgo.MessageCreate) (string, error) {
 
-	regexCompiler := regexp.MustCompile("^!(randomOpener favorite|ro fav|rof)\\s")
+	regexCompiler := regexp.MustCompile(`\!(randomOpener favorite|ro fav|rof)\s`)
 
 	openerName := regexCompiler.ReplaceAllString(message.Content, "")
 
 	openerName = strings.ToUpper(openerName)
 
-	log.Println(openerName)
+	log.Printf("Opener name: %s", openerName)
 
 	return openerName, logic.setFavoriteOpener(message.Author.ID, openerName)
 }
@@ -60,11 +61,17 @@ func (logic *service) ProcessReaction(message *discordgo.MessageReactionAdd, rea
 }
 
 func (logic *service) setFavoriteOpener(accountId string, opener string) error {
+	_, err := logic.openerRepository.FindById(opener)
+
+	if err != nil {
+		return fmt.Errorf("%s opener not found", opener)
+	}
+
 	account, err := logic.accountRepository.FindById(accountId)
 
 	if err != nil {
 		log.Fatal(err.Error())
-		return err
+		panic(err)
 	}
 
 	if account.ID == "" {
@@ -78,15 +85,17 @@ func (logic *service) setFavoriteOpener(accountId string, opener string) error {
 		return nil
 	}
 
-	if account.FavoriteOpener != opener {
+	if account.FavoriteOpener == opener {
+		return fmt.Errorf("%s is already your favorite opener", opener)
 
-		if account.FavoriteOpener != "" {
-			logic.openerRepository.UpdateReactionBy(account.FavoriteOpener, -1)
-		}
-
-		logic.accountRepository.UpdateFavoriteOpener(accountId, opener)
-		logic.openerRepository.UpdateReactionBy(opener, 1)
 	}
+
+	if account.FavoriteOpener != "" {
+		logic.openerRepository.UpdateReactionBy(account.FavoriteOpener, -1)
+	}
+
+	logic.accountRepository.UpdateFavoriteOpener(accountId, opener)
+	logic.openerRepository.UpdateReactionBy(opener, 1)
 
 	return nil
 }

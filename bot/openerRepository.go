@@ -19,6 +19,16 @@ func NewOpenerRepository(collection *mongo.Collection) OpenerRepository {
 	return &openerRepo{collection}
 }
 
+func (repo *openerRepo) FindById(id string) (Opener, error) {
+	opener := Opener{}
+
+	cursor := repo.collection.FindOne(applicationContext, bson.M{"_id": id})
+
+	err := cursor.Decode(&opener)
+
+	return opener, err
+}
+
 func (repo *openerRepo) GetRandomOpener() (Opener, error) {
 
 	pipeline := []bson.M{{"$match": bson.D{}}, {"$sample": bson.M{"size": 1}}}
@@ -72,7 +82,6 @@ func (repo *openerRepo) UpdateReactionBy(openerName string, quantity int) error 
 		applicationContext,
 		bson.M{"_id": openerName},
 		bson.D{{"$inc", bson.D{{"reactions", quantity}}}},
-		options.Update().SetUpsert(true),
 	)
 
 	if err != nil {

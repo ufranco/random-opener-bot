@@ -19,9 +19,9 @@ var (
 )
 
 const (
-	getRandomOpenerPattern  string = "^\\!(randomOpener|ro)$"
-	getLeaderboardPattern   string = "^\\!(randomOpener|ro) top$"
-	setFavoriteOpenerPatter string = "^\\!(randomOpener favorite|ro fav|rof)\\s([a-zA-Z\\s)]{3,20})$"
+	getRandomOpenerPattern  string = `^\!(randomOpener|ro)$`
+	getLeaderboardPattern   string = `^\!(randomOpener|ro) top$`
+	setFavoriteOpenerPatter string = `^\!(randomOpener favorite|ro fav|rof)\s([a-zA-Z\s)]{3,20})$`
 
 	colorMaxValue int = 16777215
 )
@@ -191,12 +191,14 @@ func messageCreateHandler(session *discordgo.Session, message *discordgo.Message
 
 		newFavoriteOpener, err := logicLayer.SetFavoriteOpener(message)
 
-		if err != nil {
-			log.Fatal(err.Error())
-			return
-		}
+		var str string
 
-		str := fmt.Sprintf("Che bro ahora tu opener favorito es el ***%s***", newFavoriteOpener)
+		if err != nil {
+			str = fmt.Sprintf(err.Error())
+		} else {
+
+			str = fmt.Sprintf("Che bro ahora tu opener favorito es el ***%s***", newFavoriteOpener)
+		}
 
 		session.ChannelMessageSend(message.ChannelID, str)
 		return
@@ -204,9 +206,9 @@ func messageCreateHandler(session *discordgo.Session, message *discordgo.Message
 }
 
 func getUserNickname(message *discordgo.MessageCreate) string {
-	if message.Member.Nick == "" {
-		return message.Author.Username
+	if message.Member != nil {
+		return message.Member.Nick
 	}
 
-	return message.Member.Nick
+	return message.Author.Username
 }

@@ -8,6 +8,7 @@ type Opener struct {
 }
 
 type OpenerRepository interface {
+	FindById(id string) (Opener, error)
 	GetRandomOpener() (Opener, error)
 	UpdateReactionBy(openerName string, quantity int) error
 	GetLeaderboard() ([]Opener, error)

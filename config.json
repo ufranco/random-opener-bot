@@ -1,4 +1,4 @@
 {
-    "BOT_TOKEN": "",
-    "MONGO_URI": ""
+    "BOT_TOKEN": "OTI4MTcwMDE4ODQyMjE4NDk3.YdU3sQ.CKmh-GbBQvzx6m9_QsXZHYzRqi0",
+    "MONGO_URI": "mongodb+srv://randomOpenerBot:qPHixXTFUnj6L4u@cluster0.le00z.mongodb.net/test?authSource=admin&replicaSet=atlas-gj6rrt-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true"
 }

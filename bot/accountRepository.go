@@ -28,10 +28,11 @@ func (repo *accountRepo) Register(account Account) error {
 
 func (repo *accountRepo) FindById(userId string) (Account, error) {
 	account := Account{}
-	singleResult := repo.collection.FindOne(applicationContext, bson.M{"_id": userId})
 
-	if singleResult != nil {
-		singleResult.Decode(&account)
+	err := repo.collection.FindOne(applicationContext, bson.M{"_id": userId}).Decode(&account)
+
+	if err != nil {
+		return account, err
 	}
 
 	return account, nil
