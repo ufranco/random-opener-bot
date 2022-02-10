@@ -1,14 +1,15 @@
 package bot
 
 type Opener struct {
-	ID          string `json:"_id" bson:"_id"`
-	Name        string `json:"name" bson:"name"`
-	Description string `json:"description" bson:"description"`
-	Reactions   int32  `json:"reactions" bson:"reactions"`
-	ImageURL    string `json:"image_url" bson:"image_url"`
+	Name        string `bson:"_id"`
+	Description string `bson:"description"`
+	Reactions   int32  `bson:"reactions"`
+	ImageURL    string `bson:"image_url"`
 }
 
-type Repository interface {
-	GetLeaderboard() ([]Opener, error)
+type OpenerRepository interface {
+	FindById(id string) (Opener, error)
 	GetRandomOpener() (Opener, error)
+	UpdateReactionBy(openerName string, quantity int) error
+	GetLeaderboard() ([]Opener, error)
 }
