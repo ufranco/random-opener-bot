@@ -57,7 +57,7 @@ func (repo *openerRepo) GetRandomOpener() (Opener, error) {
 func (repo *openerRepo) GetLeaderboard() ([]Opener, error) {
 	sort := options.Find()
 
-	sort.SetSort(bson.D{{"reactions", -1}})
+	sort.SetSort(bson.M{"reactions": -1})
 
 	loadedCursor, err := repo.collection.Find(applicationContext, bson.D{}, sort)
 
@@ -81,7 +81,7 @@ func (repo *openerRepo) UpdateReactionBy(openerName string, quantity int) error 
 	_, err := repo.collection.UpdateOne(
 		applicationContext,
 		bson.M{"_id": openerName},
-		bson.D{{"$inc", bson.D{{"reactions", quantity}}}},
+		bson.M{"$inc": bson.M{"reactions": quantity}},
 	)
 
 	if err != nil {

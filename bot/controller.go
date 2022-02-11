@@ -19,6 +19,7 @@ var (
 )
 
 const (
+	botPrefix               string = "!"
 	getRandomOpenerPattern  string = `^\!(randomOpener|ro)$`
 	getLeaderboardPattern   string = `^\!(randomOpener|ro) top$`
 	setFavoriteOpenerPatter string = `^\!(randomOpener favorite|ro fav|rof)\s([a-zA-Z\s)]{3,20})$`
@@ -82,51 +83,46 @@ func Start(
 }
 */
 
-func messageCreateHandler(session *discordgo.Session, message *discordgo.MessageCreate) {
-	if message.GuildID == "" || message.Author.ID == session.State.User.ID {
+func messageCreateHandler(ds *discordgo.Session, msg *discordgo.MessageCreate) {
+	if !isAValidMessage(ds, msg) {
 		return
 	}
 
-	log.Printf("%s said '%s'", getUserNickname(message), message.Content)
+	log.Printf("%s said '%s'", getUserNickname(msg), msg.Content)
 
-	matchesHelpPattern, err := regexp.MatchString(helpPattern, message.Content)
+	help(ds, msg)
+	getRandomOpener(ds, msg)
+	getOpenerLeaderboard(ds, msg)
+	setFavoriteOpener(ds, msg)
+}
+
+func help(ds *discordgo.Session, msg *discordgo.MessageCreate) {
+	match, err := regexp.MatchString(helpPattern, msg.Content)
 
 	if err != nil {
 		log.Fatal(err.Error())
 		return
 	}
 
-	matchesGetRandomOpenerPattern, err := regexp.MatchString(getRandomOpenerPattern, message.Content)
+	if match {
+		ds.ChannelMessageSend(msg.ChannelID, "I got ya fam! Type ***!randomOpener*** or just ***!ro***")
+	}
+}
+
+func getRandomOpener(ds *discordgo.Session, msg *discordgo.MessageCreate) {
+	match, err := regexp.MatchString(getRandomOpenerPattern, msg.Content)
 
 	if err != nil {
 		log.Fatal(err.Error())
 		return
 	}
 
-	matchesGetLeaderboardPattern, err := regexp.MatchString(getLeaderboardPattern, message.Content)
+	if match {
 
-	if err != nil {
-		log.Fatal(err.Error())
-		return
-	}
-
-	matchesSetFavoriteOpenerPattern, err := regexp.MatchString(setFavoriteOpenerPatter, message.Content)
-
-	if err != nil {
-		log.Fatal(err.Error())
-		return
-	}
-
-	if matchesHelpPattern {
-		session.ChannelMessageSend(message.ChannelID, "I got ya fam! Type ***!randomOpener*** or just ***!ro***")
-	}
-
-	if matchesGetRandomOpenerPattern {
-
-		opener, err := logicLayer.GetRandomOpener(message)
+		opener, err := logicLayer.GetRandomOpener(msg)
 
 		if err != nil {
-			session.ChannelMessageSend(message.ChannelID, "se rompió todo, bancame un cachito uwu")
+			ds.ChannelMessageSend(msg.ChannelID, "se rompió todo, bancame un cachito uwu")
 			return
 		}
 
@@ -144,15 +140,25 @@ func messageCreateHandler(session *discordgo.Session, message *discordgo.Message
 			Color: rand.Intn(colorMaxValue),
 		}
 
-		session.ChannelMessageSendEmbed(message.ChannelID, &embedMessage)
+		ds.ChannelMessageSendEmbed(msg.ChannelID, &embedMessage)
+	}
+}
+
+func getOpenerLeaderboard(ds *discordgo.Session, msg *discordgo.MessageCreate) {
+
+	match, err := regexp.MatchString(getLeaderboardPattern, msg.Content)
+
+	if err != nil {
+		log.Fatal(err.Error())
 		return
 	}
 
-	if matchesGetLeaderboardPattern {
+	if match {
+
 		openers, err := logicLayer.GetOpenerLeaderboard()
 
 		if err != nil {
-			session.ChannelMessageSend(message.ChannelID, "se rompió todo, bancame un cachito uwu")
+			ds.ChannelMessageSend(msg.ChannelID, "se rompió todo, bancame un cachito uwu")
 			return
 		}
 
@@ -183,13 +189,21 @@ func messageCreateHandler(session *discordgo.Session, message *discordgo.Message
 			Color:       rand.Intn(colorMaxValue),
 		}
 
-		session.ChannelMessageSendEmbed(message.ChannelID, &embedMessage)
+		ds.ChannelMessageSendEmbed(msg.ChannelID, &embedMessage)
+	}
+}
+
+func setFavoriteOpener(ds *discordgo.Session, msg *discordgo.MessageCreate) {
+	match, err := regexp.MatchString(setFavoriteOpenerPatter, msg.Content)
+
+	if err != nil {
+		log.Fatal(err.Error())
 		return
 	}
 
-	if matchesSetFavoriteOpenerPattern {
+	if match {
 
-		newFavoriteOpener, err := logicLayer.SetFavoriteOpener(message)
+		newFavoriteOpener, err := logicLayer.SetFavoriteOpener(msg)
 
 		var str string
 
@@ -200,9 +214,25 @@ func messageCreateHandler(session *discordgo.Session, message *discordgo.Message
 			str = fmt.Sprintf("Che bro ahora tu opener favorito es el ***%s***", newFavoriteOpener)
 		}
 
-		session.ChannelMessageSend(message.ChannelID, str)
-		return
+		ds.ChannelMessageSend(msg.ChannelID, str)
 	}
+}
+
+func isAValidMessage(ds *discordgo.Session, msg *discordgo.MessageCreate) bool {
+	return startsWithPrefix(msg.Content) && !isAPrivateMessage(msg) && !isOwnMessage(ds, msg)
+}
+
+func startsWithPrefix(msg string) bool {
+	return strings.HasPrefix(botPrefix, msg)
+}
+
+func isAPrivateMessage(msg *discordgo.MessageCreate) bool {
+	return msg.GuildID == ""
+}
+
+func isOwnMessage(ds *discordgo.Session, msg *discordgo.MessageCreate) bool {
+	return msg.Author.ID == ds.State.User.ID
+
 }
 
 func getUserNickname(message *discordgo.MessageCreate) string {
