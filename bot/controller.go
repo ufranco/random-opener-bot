@@ -208,7 +208,7 @@ func setFavoriteOpener(ds *discordgo.Session, msg *discordgo.MessageCreate) {
 		var str string
 
 		if err != nil {
-			str = fmt.Sprintf(err.Error())
+			str = err.Error()
 		} else {
 
 			str = fmt.Sprintf("Che bro ahora tu opener favorito es el ***%s***", newFavoriteOpener)
@@ -219,11 +219,7 @@ func setFavoriteOpener(ds *discordgo.Session, msg *discordgo.MessageCreate) {
 }
 
 func isAValidMessage(ds *discordgo.Session, msg *discordgo.MessageCreate) bool {
-	return startsWithPrefix(msg.Content) && !isAPrivateMessage(msg) && !isOwnMessage(ds, msg)
-}
-
-func startsWithPrefix(msg string) bool {
-	return strings.HasPrefix(botPrefix, msg)
+	return !isAPrivateMessage(msg) && !isOwnMessage(ds, msg)
 }
 
 func isAPrivateMessage(msg *discordgo.MessageCreate) bool {

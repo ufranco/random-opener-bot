@@ -42,11 +42,8 @@ func (logic *service) GetOpenerLeaderboard() ([]Opener, error) {
 }
 
 func (logic *service) SetFavoriteOpener(message *discordgo.MessageCreate) (string, error) {
-
 	regexCompiler := regexp.MustCompile(`\!(randomOpener favorite|ro fav|rof)\s`)
-
 	openerName := regexCompiler.ReplaceAllString(message.Content, "")
-
 	openerName = strings.ToUpper(openerName)
 
 	log.Printf("Opener name: %s", openerName)
@@ -55,7 +52,6 @@ func (logic *service) SetFavoriteOpener(message *discordgo.MessageCreate) (strin
 }
 
 func (logic *service) ProcessReaction(message *discordgo.MessageReactionAdd, reactedTo *discordgo.Message) error {
-
 	return nil
 	//return SetFavoriteOpener()
 }
@@ -70,17 +66,19 @@ func (logic *service) setFavoriteOpener(accountId string, opener string) error {
 	account, err := logic.accountRepository.FindById(accountId)
 
 	if err != nil && err.Error() == "mongo: no documents in result" {
+
 		account = Account{
 			ID:             accountId,
 			FavoriteOpener: opener,
 		}
 
 		if err = logic.accountRepository.Register(account); err != nil {
+
 			log.Fatal(err.Error())
 			return err
 		}
-
 		if err = logic.openerRepository.UpdateReactionBy(opener, 1); err != nil {
+
 			log.Fatal(err.Error())
 			return err
 		}
