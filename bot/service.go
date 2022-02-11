@@ -63,39 +63,50 @@ func (logic *service) ProcessReaction(message *discordgo.MessageReactionAdd, rea
 func (logic *service) setFavoriteOpener(accountId string, opener string) error {
 	_, err := logic.openerRepository.FindById(opener)
 
-	if err != nil {
+	if err != nil && err.Error() == "mongo: no documents in result" {
 		return fmt.Errorf("%s opener not found", opener)
 	}
 
 	account, err := logic.accountRepository.FindById(accountId)
 
-	if err != nil {
-		log.Fatal(err.Error())
-		panic(err)
-	}
-
-	if account.ID == "" {
-		newAccount := Account{
-			accountId,
-			opener,
+	if err != nil && err.Error() == "mongo: no documents in result" {
+		account = Account{
+			ID:             accountId,
+			FavoriteOpener: opener,
 		}
 
-		logic.accountRepository.Register(newAccount)
+		if err = logic.accountRepository.Register(account); err != nil {
+			log.Fatal(err.Error())
+			return err
+		}
 
-		return nil
-	}
+		if err = logic.openerRepository.UpdateReactionBy(opener, 1); err != nil {
+			log.Fatal(err.Error())
+			return err
+		}
 
-	if account.FavoriteOpener == opener {
+		return err
+
+	} else if account.FavoriteOpener == opener {
 		return fmt.Errorf("%s is already your favorite opener", opener)
-
 	}
 
-	if account.FavoriteOpener != "" {
-		logic.openerRepository.UpdateReactionBy(account.FavoriteOpener, -1)
+	if err = logic.openerRepository.UpdateReactionBy(account.FavoriteOpener, -1); err != nil {
+		log.Fatal(err.Error())
+		return err
 	}
 
-	logic.accountRepository.UpdateFavoriteOpener(accountId, opener)
-	logic.openerRepository.UpdateReactionBy(opener, 1)
+	if err = logic.openerRepository.UpdateReactionBy(opener, 1); err != nil {
+		log.Fatal(err.Error())
+		return err
+	}
+
+	err = logic.accountRepository.UpdateFavoriteOpener(accountId, opener)
+
+	if err != nil {
+		log.Fatal(err.Error())
+		return err
+	}
 
 	return nil
 }
