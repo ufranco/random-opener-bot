@@ -20,7 +20,7 @@ func (repo *accountRepo) Register(account Account) error {
 
 	if err != nil {
 		log.Fatal(err.Error())
-		return errRepo
+		return err
 	}
 
 	return nil
@@ -45,9 +45,9 @@ func (repo *accountRepo) UpdateFavoriteOpener(userId string, openerName string) 
 		bson.M{"$set": bson.M{"favorite_opener": openerName}},
 	)
 
-	if result == nil {
-		log.Fatal(errRepo)
-		return errRepo
+	if err := result.Err(); err != nil {
+		log.Fatal(err.Error())
+		return err
 	}
 
 	return nil

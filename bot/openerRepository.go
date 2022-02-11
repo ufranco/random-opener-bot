@@ -1,15 +1,12 @@
 package bot
 
 import (
-	"errors"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-var errRepo error = errors.New("unable to handle repo request")
 
 type openerRepo struct {
 	collection *mongo.Collection
@@ -40,7 +37,7 @@ func (repo *openerRepo) GetRandomOpener() (Opener, error) {
 
 	if err != nil {
 		log.Fatal(err.Error())
-		return Opener{}, errRepo
+		return Opener{}, err
 	}
 
 	defer loadedCursor.Close(applicationContext)
@@ -63,7 +60,7 @@ func (repo *openerRepo) GetLeaderboard() ([]Opener, error) {
 
 	if err != nil {
 		log.Fatal(err)
-		return []Opener{}, errRepo
+		return []Opener{}, err
 	}
 
 	defer loadedCursor.Close(applicationContext)
@@ -85,9 +82,9 @@ func (repo *openerRepo) UpdateReactionBy(openerName string, quantity int) error 
 	)
 
 	if err != nil {
-		log.Fatal(errRepo)
-		return errRepo
+		log.Fatal(err.Error())
+		return err
 	}
 
-	return errRepo
+	return nil
 }
